@@ -15,7 +15,7 @@ if (fs.existsSync(serverEnv)) {
   dotenv.config();
 }
 
-const pool = mysql.createPool({
+const poolConfig = {
   host: process.env.DB_HOST || '127.0.0.1',
   port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER || 'root',
@@ -26,7 +26,14 @@ const pool = mysql.createPool({
   queueLimit: 0,
   charset: 'utf8mb4',
   decimalNumbers: true
-});
+};
+
+// Automatically enable SSL for cloud databases (TiDB, Aiven, Railway, etc.)
+if (process.env.DB_SSL === 'true' || process.env.DB_SSL === '1' || (process.env.DB_HOST && process.env.DB_HOST !== '127.0.0.1' && process.env.DB_HOST !== 'localhost')) {
+  poolConfig.ssl = { rejectUnauthorized: false };
+}
+
+const pool = mysql.createPool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('[MySQL Pool Error]', err);
